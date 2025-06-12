@@ -1,11 +1,16 @@
 ---
-name: "✅ Feature request"
-about: Feature 작업 상황을 입력해주세요.
+name: " ISSUE_TEMPLATE"
+about: Issue 내용을 입력해주세요.
 title: ''
 labels: ''
 assignees: ''
 
 ---
+
+## ⭐ Classification
+- [ ] 기능
+- [ ] 버그
+- [ ] 기타
 
 ## 📄 이슈 내용
 
@@ -13,7 +18,10 @@ assignees: ''
 
 ## 📝 상세 내용
 
-<!--- 기능 추가와 관련된 상세 내용을 작성해 주세요. -->
+<!--- 이슈 내용을 자세히 작성해주세요. -->
+
+## 📅 Estimated Duration
+4/1(월) ~ 4/3 (수) [3일]
 
 ## ✅ 체크리스트
 
