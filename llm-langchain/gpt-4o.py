@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 import logging
 
-from prompts import prompt_map, get_user_prompt
+from prompts import prompt_map
 from models.translate import TanslateRequest, TranslateResponse
 
 # 로깅 설정
@@ -33,6 +33,9 @@ def create_prompt_template(difficulty: str = "2단계") -> ChatPromptTemplate:
     ])
     return template
 
+def get_user_prompt(text: str) -> str:
+    return f"""원문: {text}"""
+
 # === LangChain 모델 초기화 ===
 api_key = os.getenv("OPENAI_API_KEY")
 llm = None
@@ -56,7 +59,7 @@ else:
 output_parser = StrOutputParser()
 
 # === API 엔드포인트 ===
-@app.post("/tnaslate", response_model=TranslateResponse)
+@app.post("/translate", response_model=TranslateResponse)
 async def translate_text(request: TanslateRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="API 키가 설정되지 않았습니다.")
@@ -66,7 +69,7 @@ async def translate_text(request: TanslateRequest):
     try:        
         prompt_template = create_prompt_template(request.difficulty)
         
-        user_input = get_user_prompt(request.text, request.difficulty)
+        user_input = get_user_prompt(request.text)
         
         # LangChain 체인 구성 및 실행
         chain = prompt_template | llm | output_parser

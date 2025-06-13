@@ -5,8 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import logging
-from typing import Optional
-from prompts import prompt_map, get_user_prompt
+from prompts import prompt_map
 
 # LangChain imports 추가 (프롬프트 템플릿만 사용)
 from langchain_core.prompts import ChatPromptTemplate
@@ -26,6 +25,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
+def get_user_prompt(text: str) -> str:
+    return f"""원문: {text}"""
+
 def create_prompt_template(difficulty: str = "2단계") -> ChatPromptTemplate:
     """난이도에 따른 ChatPromptTemplate 생성"""
     system_prompt = prompt_map.get(difficulty, prompt_map["2단계"])
@@ -41,7 +43,7 @@ def get_formatted_prompt(text: str, difficulty: str) -> tuple[str, str]:
     try:
         # ChatPromptTemplate 체인 생성
         prompt_template = create_prompt_template(difficulty)
-        user_input = get_user_prompt(text, difficulty)
+        user_input = get_user_prompt(text)
         
         # 체인 실행해서 메시지 생성
         messages = prompt_template.format_messages(user_input=user_input)
@@ -56,7 +58,7 @@ def get_formatted_prompt(text: str, difficulty: str) -> tuple[str, str]:
         logger.error(f"LangChain 프롬프트 체인 실패: {str(e)}, 기존 방식으로 fallback")
         # 기존 방식으로 fallback
         system_prompt = prompt_map.get(difficulty, prompt_map["2단계"])
-        user_prompt = get_user_prompt(text, difficulty)
+        user_prompt = get_user_prompt(text)
         return system_prompt, user_prompt
     
 # === OpenAI 클라이언트 초기화 ===
@@ -75,9 +77,6 @@ async def translate_text(request: TanslateRequest):
 
     # LangChain 체인을 사용해 프롬프트 생성
     system_prompt, user_prompt = get_formatted_prompt(request.text, request.difficulty)
-    
-    print(system_prompt)
-    print(user_prompt)
     
     # o4-mini 시도
     if client:

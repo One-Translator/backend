@@ -8,7 +8,7 @@ class TanslateRequest(BaseModel):
 
 class TranslateResponse(BaseModel):
     original: str
-    converted: str
+    translated: str
     difficulty: str
     reasoning_effort: str
     reasoning_tokens: Optional[int] = None
