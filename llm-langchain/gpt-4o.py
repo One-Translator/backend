@@ -24,8 +24,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-def create_prompt_template(difficulty: str = "2단계") -> ChatPromptTemplate:
-    system_prompt = prompt_map.get(difficulty, prompt_map["2단계"])
+def create_prompt_template(level: str = "2단계") -> ChatPromptTemplate:
+    system_prompt = prompt_map.get(level, prompt_map["2단계"])
     
     template = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -67,7 +67,7 @@ async def translate_text(request: TanslateRequest):
         raise HTTPException(status_code=500, detail="gpt-4o-mini 서비스를 사용할 수 없습니다. API 키를 확인해주세요.")
 
     try:        
-        prompt_template = create_prompt_template(request.difficulty)
+        prompt_template = create_prompt_template(request.level)
         
         user_input = get_user_prompt(request.text)
         
@@ -79,7 +79,7 @@ async def translate_text(request: TanslateRequest):
         return TranslateResponse(
             original=request.text,
             translated=translated_text.strip(),
-            difficulty=request.difficulty,
+            level=request.level,
             reasoning_effort=getattr(request, 'reasoning_effort', "N/A (LangChain)"),
             reasoning_tokens=None,  # LangChain에서는 직접 접근 어려움
             total_tokens=None       # 필요시 콜백으로 추적 가능
