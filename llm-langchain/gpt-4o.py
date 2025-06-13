@@ -9,6 +9,7 @@ import os
 import logging
 
 from prompts import prompt_map
+
 from models.translate import TanslateRequest, TranslateResponse
 
 # 로깅 설정
@@ -26,6 +27,7 @@ app = FastAPI(
 
 def create_prompt_template(level: str = "2단계") -> ChatPromptTemplate:
     system_prompt = prompt_map.get(level, prompt_map["2단계"])
+
     
     template = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -60,6 +62,7 @@ output_parser = StrOutputParser()
 
 # === API 엔드포인트 ===
 @app.post("/translate", response_model=TranslateResponse)
+
 async def translate_text(request: TanslateRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="API 키가 설정되지 않았습니다.")
@@ -70,6 +73,7 @@ async def translate_text(request: TanslateRequest):
         prompt_template = create_prompt_template(request.level)
         
         user_input = get_user_prompt(request.text)
+
         
         # LangChain 체인 구성 및 실행
         chain = prompt_template | llm | output_parser
@@ -80,6 +84,7 @@ async def translate_text(request: TanslateRequest):
             original=request.text,
             translated=translated_text.strip(),
             level=request.level,
+
             reasoning_effort=getattr(request, 'reasoning_effort', "N/A (LangChain)"),
             reasoning_tokens=None,  # LangChain에서는 직접 접근 어려움
             total_tokens=None       # 필요시 콜백으로 추적 가능

@@ -31,6 +31,7 @@ def get_user_prompt(text: str) -> str:
 def create_prompt_template(level: str = "2단계") -> ChatPromptTemplate:
     """난이도에 따른 ChatPromptTemplate 생성"""
     system_prompt = prompt_map.get(level, prompt_map["2단계"])
+
     
     template = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -44,6 +45,7 @@ def get_formatted_prompt(text: str, level: str) -> tuple[str, str]:
         # ChatPromptTemplate 체인 생성
         prompt_template = create_prompt_template(level)
         user_input = get_user_prompt(text)
+
         
         # 체인 실행해서 메시지 생성
         messages = prompt_template.format_messages(user_input=user_input)
@@ -59,6 +61,7 @@ def get_formatted_prompt(text: str, level: str) -> tuple[str, str]:
         # 기존 방식으로 fallback
         system_prompt = prompt_map.get(level, prompt_map["2단계"])
         user_prompt = get_user_prompt(text)
+
         return system_prompt, user_prompt
     
 # === OpenAI 클라이언트 초기화 ===
