@@ -5,8 +5,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import logging
-from typing import Optional
-from prompts import prompt_map, get_user_prompt
+from prompts import prompt_map
 
 # LangChain imports 추가 (프롬프트 템플릿만 사용)
 from langchain_core.prompts import ChatPromptTemplate
@@ -26,9 +25,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-def create_prompt_template(difficulty: str = "2단계") -> ChatPromptTemplate:
+def get_user_prompt(text: str) -> str:
+    return f"""원문: {text}"""
+
+def create_prompt_template(level: str = "2단계") -> ChatPromptTemplate:
     """난이도에 따른 ChatPromptTemplate 생성"""
-    system_prompt = prompt_map.get(difficulty, prompt_map["2단계"])
+    system_prompt = prompt_map.get(level, prompt_map["2단계"])
+
     
     template = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
@@ -36,12 +39,13 @@ def create_prompt_template(difficulty: str = "2단계") -> ChatPromptTemplate:
     ])
     return template
 
-def get_formatted_prompt(text: str, difficulty: str) -> tuple[str, str]:
+def get_formatted_prompt(text: str, level: str) -> tuple[str, str]:
     """LangChain 체인을 사용해 프롬프트 생성"""
     try:
         # ChatPromptTemplate 체인 생성
-        prompt_template = create_prompt_template(difficulty)
-        user_input = get_user_prompt(text, difficulty)
+        prompt_template = create_prompt_template(level)
+        user_input = get_user_prompt(text)
+
         
         # 체인 실행해서 메시지 생성
         messages = prompt_template.format_messages(user_input=user_input)
@@ -55,8 +59,9 @@ def get_formatted_prompt(text: str, difficulty: str) -> tuple[str, str]:
     except Exception as e:
         logger.error(f"LangChain 프롬프트 체인 실패: {str(e)}, 기존 방식으로 fallback")
         # 기존 방식으로 fallback
-        system_prompt = prompt_map.get(difficulty, prompt_map["2단계"])
-        user_prompt = get_user_prompt(text, difficulty)
+        system_prompt = prompt_map.get(level, prompt_map["2단계"])
+        user_prompt = get_user_prompt(text)
+
         return system_prompt, user_prompt
     
 # === OpenAI 클라이언트 초기화 ===
@@ -74,10 +79,7 @@ async def translate_text(request: TanslateRequest):
         raise HTTPException(status_code=400, detail="변환할 텍스트를 입력해주세요.")
 
     # LangChain 체인을 사용해 프롬프트 생성
-    system_prompt, user_prompt = get_formatted_prompt(request.text, request.difficulty)
-    
-    print(system_prompt)
-    print(user_prompt)
+    system_prompt, user_prompt = get_formatted_prompt(request.text, request.level)
     
     # o4-mini 시도
     if client:
@@ -119,7 +121,7 @@ async def translate_text(request: TanslateRequest):
             return TranslateResponse(
                 original=request.text,
                 translated=translated_text,
-                difficulty=request.difficulty,
+                level=request.level,
                 reasoning_effort=request.reasoning_effort,
                 reasoning_tokens=reasoning_tokens,
                 total_tokens=total_tokens
@@ -147,7 +149,7 @@ async def translate_text(request: TanslateRequest):
                     return TranslateResponse(
                         original=request.text,
                         converted=translated_text,
-                        difficulty=request.difficulty,
+                        level=request.level,
                         reasoning_effort="N/A (fallback)",
                         reasoning_tokens=None,
                         total_tokens=total_tokens

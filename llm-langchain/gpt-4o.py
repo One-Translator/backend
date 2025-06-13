@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 import os
 import logging
 
-from prompts import prompt_map, get_user_prompt
+from prompts import prompt_map
+
 from models.translate import TanslateRequest, TranslateResponse
 
 # 로깅 설정
@@ -24,14 +25,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
-def create_prompt_template(difficulty: str = "2단계") -> ChatPromptTemplate:
-    system_prompt = prompt_map.get(difficulty, prompt_map["2단계"])
+def create_prompt_template(level: str = "2단계") -> ChatPromptTemplate:
+    system_prompt = prompt_map.get(level, prompt_map["2단계"])
+
     
     template = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("human", "{user_input}")
     ])
     return template
+
+def get_user_prompt(text: str) -> str:
+    return f"""원문: {text}"""
 
 # === LangChain 모델 초기화 ===
 api_key = os.getenv("OPENAI_API_KEY")
@@ -56,7 +61,8 @@ else:
 output_parser = StrOutputParser()
 
 # === API 엔드포인트 ===
-@app.post("/tnaslate", response_model=TranslateResponse)
+@app.post("/translate", response_model=TranslateResponse)
+
 async def translate_text(request: TanslateRequest):
     if not api_key:
         raise HTTPException(status_code=500, detail="API 키가 설정되지 않았습니다.")
@@ -64,9 +70,10 @@ async def translate_text(request: TanslateRequest):
         raise HTTPException(status_code=500, detail="gpt-4o-mini 서비스를 사용할 수 없습니다. API 키를 확인해주세요.")
 
     try:        
-        prompt_template = create_prompt_template(request.difficulty)
+        prompt_template = create_prompt_template(request.level)
         
-        user_input = get_user_prompt(request.text, request.difficulty)
+        user_input = get_user_prompt(request.text)
+
         
         # LangChain 체인 구성 및 실행
         chain = prompt_template | llm | output_parser
@@ -76,7 +83,8 @@ async def translate_text(request: TanslateRequest):
         return TranslateResponse(
             original=request.text,
             translated=translated_text.strip(),
-            difficulty=request.difficulty,
+            level=request.level,
+
             reasoning_effort=getattr(request, 'reasoning_effort', "N/A (LangChain)"),
             reasoning_tokens=None,  # LangChain에서는 직접 접근 어려움
             total_tokens=None       # 필요시 콜백으로 추적 가능

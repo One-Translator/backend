@@ -3,13 +3,15 @@ from typing import Optional
 
 class TanslateRequest(BaseModel):
     text: str
-    difficulty: str = "2단계" # 디폴트 2단계
+    level: str = "2단계" # 디폴트 2단계
+
     reasoning_effort: str = "medium"
 
 class TranslateResponse(BaseModel):
     original: str
-    converted: str
-    difficulty: str
+    translated: str
+    level: str
+
     reasoning_effort: str
     reasoning_tokens: Optional[int] = None
     total_tokens: Optional[int] = None
