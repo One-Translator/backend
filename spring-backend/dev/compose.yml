@@ -1,4 +1,4 @@
-name: piudaa-devAdd commentMore actions
+name: piudaa-dev
 services:
   cache:
     image: redis:7.4.1-alpine3.20
